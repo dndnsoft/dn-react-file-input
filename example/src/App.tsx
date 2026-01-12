@@ -1,60 +1,79 @@
-import { useRef, useState } from "react";
-import { createFileInput, type InferSnapshot } from "dn-react-file-input";
-
-const FileInput = createFileInput({
-  uploader: (file) => {
-    const base64 = new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        resolve(reader.result as string);
-      };
-      reader.onerror = (error) => {
-        reject(error);
-      };
-      reader.readAsDataURL(file);
-    });
-
-    return {
-      src: base64.then((data) => data),
-      alt: file.name,
-    };
-  },
-});
+import {
+  base64Uploader,
+  FileInputArea,
+  useFileInputController,
+  useFiles,
+  useIsDragOver,
+} from "dn-react-file-input";
 
 export default function App() {
-  const [fileSnapshot, setFileSnapshot] =
-    useState<InferSnapshot<FileInput> | null>(null);
+  const controller = useFileInputController({
+    uploader: async (file) => {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-  const ref = useRef<HTMLInputElement>(null);
+      return base64Uploader(file);
+    },
+    defaultValue: [
+      {
+        width: 100,
+        height: 100,
+        file: {
+          src: "https://picsum.photos/100/100",
+          alt: "Placeholder Image",
+        },
+      },
+    ],
+  });
+
+  const files = useFiles({ controller });
+
+  const isDragOver = useIsDragOver({ controller });
 
   return (
     <div>
-      {fileSnapshot ? (
-        <div
-          className="preview-container"
-          style={{ aspectRatio: fileSnapshot.aspectRatio }}
-        >
-          {fileSnapshot.isLoading ? (
-            <div className="preview-loading">Loading...</div>
-          ) : (
-            <img
-              className="preview-image"
-              src={fileSnapshot.file.src}
-              alt={fileSnapshot.file.alt}
-            />
-          )}
-        </div>
-      ) : null}
+      <div className="preview-list">
+        {files.length > 0
+          ? files.map((snapshot) => {
+              return (
+                <div key={snapshot.uniqueKey} className="preview-container">
+                  {snapshot.isLoading ? (
+                    <>
+                      {snapshot.thumbnail && (
+                        <img
+                          className="preview-image"
+                          src={snapshot.thumbnail}
+                          alt={snapshot.name}
+                        />
+                      )}
+                      <div className="preview-loading">Uploading...</div>
+                    </>
+                  ) : (
+                    <img
+                      className="preview-image"
+                      src={snapshot.file.src}
+                      alt={snapshot.file.alt}
+                    />
+                  )}
+                  <button
+                    className="preview-remove-button"
+                    onClick={() => {
+                      controller.remove(snapshot);
+                    }}
+                  >
+                    X
+                  </button>
+                </div>
+              );
+            })
+          : null}
+      </div>
       <div className="app">
-        <FileInput.Button
-          ref={ref}
-          onUpload={(file) => {
-            setFileSnapshot(file.src);
-          }}
+        <FileInputArea
+          controller={controller}
+          className={"file-input-area" + (isDragOver ? " drag-over" : "")}
         >
           파일을 여기로 끌어다 놓거나 클릭해서 업로드하세요.
-        </FileInput.Button>
+        </FileInputArea>
       </div>
     </div>
   );
