@@ -31,6 +31,7 @@ export type FileInputControllerOptions<TFile> = {
     thumbnail?: string;
     file: TFile;
   }[];
+  multiple?: boolean;
 };
 
 export class FileInputController<TFile> {
@@ -71,10 +72,15 @@ export class FileInputController<TFile> {
 
   protected uploader: FileUploader<TFile>;
 
+  protected multiple: boolean;
+
   constructor({
     uploader,
     defaultValue,
+    multiple = true,
   }: FileInputControllerOptions<TFile> = {}) {
+    this.multiple = multiple;
+
     this.uploader = uploader || (base64Uploader as FileUploader<TFile>);
 
     this._snapshots =
@@ -128,7 +134,9 @@ export class FileInputController<TFile> {
         file: {} as TFile,
       };
 
-      this.snapshots = [...this.snapshots, snapshot1];
+      this.snapshots = this.multiple
+        ? [...this.snapshots, snapshot1]
+        : [snapshot1];
 
       const uploadedFile = await this.uploader(file);
 

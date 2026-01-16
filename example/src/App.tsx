@@ -2,6 +2,7 @@ import {
   base64Uploader,
   FileInputArea,
   FileInputController,
+  FilePreview,
   useFiles,
   useIsDragOver,
 } from "dn-react-file-input";
@@ -24,24 +25,7 @@ export default function App() {
           ? files.map((snapshot) => {
               return (
                 <div key={snapshot.uniqueKey} className="preview-container">
-                  {snapshot.isLoading ? (
-                    <>
-                      {snapshot.thumbnail && (
-                        <img
-                          className="preview-image"
-                          src={snapshot.thumbnail}
-                          alt={snapshot.name}
-                        />
-                      )}
-                      <div className="preview-loading">Uploading...</div>
-                    </>
-                  ) : (
-                    <img
-                      className="preview-image"
-                      src={snapshot.file.src}
-                      alt={snapshot.file.alt}
-                    />
-                  )}
+                  <FilePreview snapshot={snapshot} />
                   <button
                     className="preview-remove-button"
                     onClick={() => {

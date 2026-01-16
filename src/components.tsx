@@ -9,7 +9,10 @@ import React, {
 import {
   FileInputController,
   type FileInputControllerOptions,
+  type FileSnapshot,
 } from "./controller";
+import { useFiles } from "./use_files";
+import { useIsDragOver } from "./use_is_drag_over";
 
 export type FileInputComponentProps<TFile> = Omit<
   DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>,
@@ -26,7 +29,7 @@ export type FileInputComponentProps<TFile> = Omit<
   | "ref"
   | "defaultValue"
 > & {
-  ref: Ref<FileInputController<TFile> | null>;
+  ref?: Ref<FileInputController<TFile> | null>;
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onDrag?: (e: React.DragEvent<HTMLButtonElement>) => void;
   onDragStart?: (e: React.DragEvent<HTMLButtonElement>) => void;
@@ -55,10 +58,11 @@ export function FileInputButton<TFile>({
   onDrop,
   uploader,
   defaultValue,
+  multiple = true,
   ...props
 }: FileInputComponentProps<TFile>) {
   const controller = useMemo(
-    () => new FileInputController<TFile>({ uploader, defaultValue }),
+    () => new FileInputController<TFile>({ uploader, defaultValue, multiple }),
     []
   );
 
@@ -93,6 +97,7 @@ export function FileInputButton<TFile>({
         ref={inputRef}
         type="file"
         style={{ display: "none" }}
+        multiple={multiple}
         onChange={async (e) => {
           const files = e.target.files;
 
@@ -111,8 +116,11 @@ export function FileInputButton<TFile>({
 
 export function FileInputArea<TFile>({
   ref,
+  children,
   ...props
-}: FileInputComponentProps<TFile>) {
+}: Omit<FileInputComponentProps<TFile>, "children"> & {
+  children: React.ReactNode | ((isDragOver: boolean) => React.ReactNode);
+}) {
   const controllerRef = useRef<FileInputController<TFile>>(null);
 
   useImperativeHandle(ref, () => controllerRef.current!, []);
@@ -161,6 +169,8 @@ export function FileInputArea<TFile>({
     }
   };
 
+  const isDragOver = useIsDragOver(controllerRef);
+
   return (
     <FileInputButton
       {...props}
@@ -169,6 +179,41 @@ export function FileInputArea<TFile>({
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-    />
+    >
+      {typeof children === "function" ? children(isDragOver) : children}
+    </FileInputButton>
+  );
+}
+
+export function FileInputSocket<TFile>({
+  ref,
+  children,
+  overlay,
+  ...props
+}: Omit<FileInputComponentProps<TFile>, "children"> & {
+  children:
+    | React.ReactNode
+    | ((fileSnapshot: FileSnapshot<TFile>) => React.ReactNode);
+  overlay?: (isDragOver: boolean) => React.ReactNode;
+}) {
+  const controllerRef = useRef<FileInputController<TFile>>(null);
+
+  useImperativeHandle(ref, () => controllerRef.current!, []);
+
+  const files = useFiles(controllerRef);
+
+  const isDragOver = useIsDragOver(controllerRef);
+
+  const snapshot = files.length > 0 ? files[0] : undefined;
+
+  return (
+    <FileInputArea ref={controllerRef} multiple={false} {...props}>
+      {typeof children === "function"
+        ? snapshot
+          ? children(snapshot)
+          : undefined
+        : children}
+      {(!snapshot || isDragOver) && <>{overlay && overlay(isDragOver)}</>}
+    </FileInputArea>
   );
 }
