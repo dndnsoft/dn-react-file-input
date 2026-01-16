@@ -1,33 +1,21 @@
 import {
   base64Uploader,
   FileInputArea,
-  useFileInputController,
+  FileInputController,
   useFiles,
   useIsDragOver,
 } from "dn-react-file-input";
+import { useRef } from "react";
 
 export default function App() {
-  const controller = useFileInputController({
-    uploader: async (file) => {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+  const controllerRef = useRef<FileInputController<{
+    src: string;
+    alt: string;
+  }> | null>(null);
 
-      return base64Uploader(file);
-    },
-    defaultValue: [
-      {
-        width: 100,
-        height: 100,
-        file: {
-          src: "https://picsum.photos/100/100",
-          alt: "Placeholder Image",
-        },
-      },
-    ],
-  });
+  const files = useFiles(controllerRef);
 
-  const files = useFiles({ controller });
-
-  const isDragOver = useIsDragOver({ controller });
+  const isDragOver = useIsDragOver(controllerRef);
 
   return (
     <div>
@@ -57,7 +45,7 @@ export default function App() {
                   <button
                     className="preview-remove-button"
                     onClick={() => {
-                      controller.remove(snapshot);
+                      controllerRef.current?.remove(snapshot);
                     }}
                   >
                     X
@@ -69,8 +57,23 @@ export default function App() {
       </div>
       <div className="app">
         <FileInputArea
-          controller={controller}
+          ref={controllerRef}
           className={"file-input-area" + (isDragOver ? " drag-over" : "")}
+          uploader={async (file) => {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+            return base64Uploader(file);
+          }}
+          defaultValue={[
+            {
+              width: 100,
+              height: 100,
+              file: {
+                src: "https://picsum.photos/100/100",
+                alt: "Placeholder Image",
+              },
+            },
+          ]}
         >
           파일을 여기로 끌어다 놓거나 클릭해서 업로드하세요.
         </FileInputArea>

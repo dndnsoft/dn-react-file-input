@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { base64Uploader } from "./base64_uploader";
 import { generateSizeMetadata } from "./metadata";
 
@@ -18,7 +17,7 @@ export type FileUploader<TFile> = (
   file: File
 ) => Awaited<TFile> | Promise<Awaited<TFile>>;
 
-export type FileInputSubscriber<TFile> = () => void;
+export type FileInputSubscriber = () => void;
 
 export type FileInputControllerOptions<TFile> = {
   uploader?: FileUploader<TFile>;
@@ -66,7 +65,7 @@ export class FileInputController<TFile> {
       .map((snapshot) => snapshot.file);
   }
 
-  protected subscribers: FileInputSubscriber<TFile>[] = [];
+  protected subscribers: FileInputSubscriber[] = [];
 
   protected uploader: FileUploader<TFile>;
 
@@ -156,10 +155,4 @@ export class FileInputController<TFile> {
       subscriber();
     }
   }
-}
-
-export function useFileInputController<TFile>(
-  options?: FileInputControllerOptions<TFile>
-) {
-  return useMemo(() => new FileInputController<TFile>(options), []);
 }

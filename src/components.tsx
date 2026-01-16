@@ -1,16 +1,19 @@
 import React, {
+  useImperativeHandle,
+  useMemo,
   useRef,
   type DetailedHTMLProps,
   type InputHTMLAttributes,
+  type Ref,
 } from "react";
 import {
-  useFileInputController,
-  type FileInputController,
+  FileInputController,
   type FileInputControllerOptions,
 } from "./controller";
 
 export type FileInputComponentProps<TFile> = Omit<
   DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>,
+  | "ref"
   | "onClick"
   | "onDrag"
   | "onDragStart"
@@ -21,7 +24,9 @@ export type FileInputComponentProps<TFile> = Omit<
   | "onDragLeave"
   | "onDrop"
   | "ref"
+  | "defaultValue"
 > & {
+  ref: Ref<FileInputController<TFile> | null>;
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onDrag?: (e: React.DragEvent<HTMLButtonElement>) => void;
   onDragStart?: (e: React.DragEvent<HTMLButtonElement>) => void;
@@ -31,10 +36,10 @@ export type FileInputComponentProps<TFile> = Omit<
   onDragExit?: (e: React.DragEvent<HTMLButtonElement>) => void;
   onDragLeave?: (e: React.DragEvent<HTMLButtonElement>) => void;
   onDrop?: (e: React.DragEvent<HTMLButtonElement>) => void;
-  controller?: FileInputController<TFile>;
 } & FileInputControllerOptions<TFile>;
 
 export function FileInputButton<TFile>({
+  ref,
   id,
   className,
   children,
@@ -48,13 +53,16 @@ export function FileInputButton<TFile>({
   onDragLeave,
   onChange,
   onDrop,
-  controller: externalController,
   uploader,
+  defaultValue,
   ...props
 }: FileInputComponentProps<TFile>) {
-  const innerController = useFileInputController({ uploader });
+  const controller = useMemo(
+    () => new FileInputController<TFile>({ uploader, defaultValue }),
+    []
+  );
 
-  const controller = externalController || innerController;
+  useImperativeHandle(ref, () => controller, []);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -102,17 +110,18 @@ export function FileInputButton<TFile>({
 }
 
 export function FileInputArea<TFile>({
-  controller: externalController,
-  uploader,
+  ref,
   ...props
 }: FileInputComponentProps<TFile>) {
-  const innerController = useFileInputController({ uploader });
+  const controllerRef = useRef<FileInputController<TFile>>(null);
 
-  const controller = externalController || innerController;
+  useImperativeHandle(ref, () => controllerRef.current!, []);
 
   const onDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    const controller = controllerRef.current!;
 
     controller.isDragOver = true;
   };
@@ -120,6 +129,9 @@ export function FileInputArea<TFile>({
   const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    const controller = controllerRef.current!;
+
     controller.isDragOver = true;
   };
 
@@ -127,12 +139,16 @@ export function FileInputArea<TFile>({
     e.preventDefault();
     e.stopPropagation();
 
+    const controller = controllerRef.current!;
+
     controller.isDragOver = false;
   };
 
   const onDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    const controller = controllerRef.current!;
 
     controller.isDragOver = false;
 
@@ -148,7 +164,7 @@ export function FileInputArea<TFile>({
   return (
     <FileInputButton
       {...props}
-      controller={controller}
+      ref={controllerRef}
       onDragEnter={onDragEnter}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
