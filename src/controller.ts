@@ -5,6 +5,7 @@ export type FileSnapshot<TFile> = {
   uniqueKey: string;
   aspectRatio: number | undefined;
   isLoading: boolean;
+  size: number | undefined;
   type: string | undefined;
   name: string | undefined;
   width: number | undefined;
@@ -22,6 +23,7 @@ export type FileInputSubscriber = () => void;
 export type FileInputControllerOptions<TFile> = {
   uploader?: FileUploader<TFile>;
   defaultValue?: {
+    size?: number;
     width?: number;
     height?: number;
     type?: string;
@@ -76,17 +78,20 @@ export class FileInputController<TFile> {
     this.uploader = uploader || (base64Uploader as FileUploader<TFile>);
 
     this._snapshots =
-      defaultValue?.map(({ width, height, type, name, file, thumbnail }) => ({
-        uniqueKey: crypto.randomUUID(),
-        aspectRatio: width && height ? width / height : undefined,
-        isLoading: false,
-        name,
-        type,
-        width,
-        height,
-        thumbnail,
-        file,
-      })) || [];
+      defaultValue?.map(
+        ({ width, height, size, type, name, file, thumbnail }) => ({
+          uniqueKey: crypto.randomUUID(),
+          aspectRatio: width && height ? width / height : undefined,
+          isLoading: false,
+          name,
+          size,
+          type,
+          width,
+          height,
+          thumbnail,
+          file,
+        })
+      ) || [];
   }
 
   subscribe(subscriber: () => void) {
@@ -102,7 +107,7 @@ export class FileInputController<TFile> {
 
   async upload(files: File[]): Promise<void> {
     for (const file of files) {
-      const { type, name } = file;
+      const { type, name, size } = file;
 
       const { width, height, thumbnail } = await generateSizeMetadata(file);
 
@@ -113,6 +118,7 @@ export class FileInputController<TFile> {
       const snapshot1 = {
         uniqueKey,
         isLoading: true,
+        size,
         type,
         name,
         width,
@@ -129,6 +135,7 @@ export class FileInputController<TFile> {
       const snapshot2 = {
         uniqueKey,
         isLoading: false,
+        size,
         type,
         name,
         width,
