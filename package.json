@@ -1,6 +1,6 @@
 {
   "name": "dn-react-file-input",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "types": "./dist/index.d.ts",
   "main": "./dist/index.mjs",
   "module": "./dist/index.js",
@@ -33,11 +33,11 @@
   "homepage": "https://github.com/dndnsoft/dn-react-file-input#readme",
   "description": "",
   "devDependencies": {
-    "@types/node": "^24.10.1",
+    "@types/node": "^25.3.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tsup": "^8.5.1",
-    "typescript": "^5.7.3"
+    "typescript": "^5.9.3"
   },
   "peerDependencies": {
     "react": "^19",
