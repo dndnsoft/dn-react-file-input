@@ -2,33 +2,41 @@ import { useEffect, useLayoutEffect, useState, type RefObject } from "react";
 import type { FileInputController, FileSnapshot } from "./controller";
 
 export function useFiles<TFile>(
-  ref: RefObject<FileInputController<TFile> | null>
+    ref: RefObject<FileInputController<TFile> | null>,
 ) {
-  const [snapshots, setFileSnapshot] = useState<FileSnapshot<TFile>[]>([]);
+    const [snapshots, setFileSnapshot] = useState<FileSnapshot<TFile>[]>([]);
 
-  useLayoutEffect(() => {
-    const controller = ref.current;
+    useLayoutEffect(() => {
+        const controller = ref.current;
 
-    if (controller && controller.snapshots.length > 0) {
-      setFileSnapshot(controller.snapshots);
-    }
-  }, []);
+        if (controller && controller.snapshots.length > 0) {
+            setFileSnapshot(controller.snapshots);
+        }
+    }, []);
 
-  useEffect(() => {
-    const controller = ref.current;
+    useEffect(() => {
+        const controller = ref.current;
 
-    if (!controller) {
-      return;
-    }
+        if (controller && controller.snapshots.length > 0) {
+            setFileSnapshot(controller.snapshots);
+        }
+    }, []);
 
-    const unsubscribe = controller.subscribe(() => {
-      setFileSnapshot(controller.snapshots || []);
-    });
+    useEffect(() => {
+        const controller = ref.current;
 
-    return () => {
-      unsubscribe();
-    };
-  }, [ref]);
+        if (!controller) {
+            return;
+        }
 
-  return snapshots;
+        const unsubscribe = controller.subscribe(() => {
+            setFileSnapshot(controller.snapshots || []);
+        });
+
+        return () => {
+            unsubscribe();
+        };
+    }, [ref]);
+
+    return snapshots;
 }
